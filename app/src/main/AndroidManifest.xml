@@ -36,11 +36,7 @@
         <activity
             android:name=".Main"
             android:windowSoftInputMode="stateAlwaysHidden">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN"/>
 
-                <category android:name="android.intent.category.LAUNCHER"/>
-            </intent-filter>
         </activity>
 
         <service
@@ -50,6 +46,13 @@
         </service>
 
         <activity android:name=".activities.NaviActivity">
+        </activity>
+        <activity android:name=".activities.Spalsh">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
         </activity>
     </application>
 

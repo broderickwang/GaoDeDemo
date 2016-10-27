@@ -41,4 +41,7 @@ dependencies {
 
 //    compile 'org.xutils:xutils:3.3.34'
     compile 'com.squareup.okhttp3:okhttp:3.3.0'
+
+    compile 'com.squareup.picasso:picasso:2.5.1'
+    compile 'com.github.bumptech.glide:glide:3.5.2'
 }

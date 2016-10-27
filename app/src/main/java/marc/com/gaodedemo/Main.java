@@ -26,6 +26,8 @@ import android.view.View;
 import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
+import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.amap.api.location.AMapLocation;
@@ -40,11 +42,14 @@ import com.amap.api.maps.model.CameraPosition;
 import com.amap.api.maps.model.LatLng;
 import com.amap.api.maps.model.Marker;
 import com.amap.api.maps.model.MarkerOptions;
+import com.amap.api.navi.model.NaviLatLng;
 import com.amap.api.services.geocoder.GeocodeAddress;
 import com.amap.api.services.geocoder.GeocodeQuery;
 import com.amap.api.services.geocoder.GeocodeResult;
 import com.amap.api.services.geocoder.GeocodeSearch;
 import com.amap.api.services.geocoder.RegeocodeResult;
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.getbase.floatingactionbutton.FloatingActionButton;
 
 import java.io.IOException;
@@ -56,13 +61,17 @@ import java.util.List;
 import butterknife.Bind;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
+import marc.com.gaodedemo.activities.NaviActivity;
+import marc.com.gaodedemo.bean.ImageInfo;
 import marc.com.gaodedemo.service.LocateService;
-import okhttp3.Call;
+import marc.com.gaodedemo.service.MainService;
+import marc.com.gaodedemo.util.GlideCircleTransform;
 import okhttp3.Callback;
 import okhttp3.HttpUrl;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
+import retrofit2.Call;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
@@ -77,6 +86,10 @@ public class Main extends AppCompatActivity implements LocationSource
 	EditText search;
 	private LocationManager locationManager;
 	private String locationProvider;
+
+	static NaviLatLng start,end;
+	ImageView head_tx;
+	TextView head_name;
 
 	//声明定位回调监听器
 	public static AMapLocationListener mLocationListener = new AMapLocationListener() {
@@ -107,6 +120,7 @@ public class Main extends AppCompatActivity implements LocationSource
 					Log.i("TAG", "onLocationChanged: " + stringBuilder.toString());
 
 					LatLng latLng = new LatLng(aMapLocation.getLatitude(), aMapLocation.getLongitude());
+					start = new NaviLatLng(aMapLocation.getLatitude(), aMapLocation.getLongitude());
 
 					mAmap.clear();
 
@@ -176,6 +190,8 @@ public class Main extends AppCompatActivity implements LocationSource
 
 		addListner();
 
+		getPhoto();
+
 	}
 
 	private void loadOkhttp() {
@@ -194,12 +210,12 @@ public class Main extends AppCompatActivity implements LocationSource
 
 		client.newCall(request).enqueue(new Callback() {
 			@Override
-			public void onFailure(Call call, IOException e) {
+			public void onFailure(okhttp3.Call call, IOException e) {
 				Log.e("TAG", "onFailure: ", e);
 			}
 
 			@Override
-			public void onResponse(Call call, Response response) throws IOException {
+			public void onResponse(okhttp3.Call call, Response response) throws IOException {
 				Log.i("TAG", "onResponse: " + response.toString());
 			}
 		});
@@ -326,7 +342,7 @@ public class Main extends AppCompatActivity implements LocationSource
 
 		stopService(locateService);
 
-		System.exit(0);
+//		System.exit(0);
 	}
 
 	@Override
@@ -367,6 +383,12 @@ public class Main extends AppCompatActivity implements LocationSource
 				MyApplication.mLocationClient.startLocation();
 				break;
 			case R.id.route:
+				Intent i = new Intent(Main.this, NaviActivity.class);
+				Bundle bundle = new Bundle();
+				bundle.putParcelable("start", start);
+				bundle.putParcelable("end",end);
+				i.putExtras(bundle);
+				startActivity(i);
 				break;
 		}
 	}
@@ -379,6 +401,10 @@ public class Main extends AppCompatActivity implements LocationSource
 			case R.id.home:
 				break;
 			case R.id.signal:
+				if(mAmap.getMapType() == AMap.MAP_TYPE_SATELLITE)
+					mAmap.setMapType(AMap.MAP_TYPE_NORMAL);
+				else
+					mAmap.setMapType(AMap.MAP_TYPE_SATELLITE);
 				break;
 		}
 		return false;
@@ -477,6 +503,8 @@ public class Main extends AppCompatActivity implements LocationSource
 
 						LatLng lng = new LatLng(address.getLatLonPoint().getLatitude(),
 								address.getLatLonPoint().getLongitude());
+						end = new NaviLatLng(address.getLatLonPoint().getLatitude(),
+								address.getLatLonPoint().getLongitude());
 
 						/*mAmap.animateCamera(CameraUpdateFactory.newLatLngZoom(lng, 15));
 						geoMarker.setPosition(AMapUtil.convertToLatLng(address.getLatLonPoint()));*/
@@ -504,6 +532,9 @@ public class Main extends AppCompatActivity implements LocationSource
 						String addressName = "经纬度值:" + address.getLatLonPoint() + "\n位置描述:"
 								+ address.getFormatAddress();
 						Toast.makeText(Main.this, addressName, Toast.LENGTH_SHORT).show();
+
+
+
 					} else {
 						Toast.makeText(Main.this, "nothings", Toast.LENGTH_SHORT).show();
 					}
@@ -532,5 +563,46 @@ public class Main extends AppCompatActivity implements LocationSource
 	private void searchAddr(String name, String city) {
 		GeocodeQuery query = new GeocodeQuery(name, city);
 		geocodeSearch.getFromLocationNameAsyn(query);
+	}
+
+	public void getPhoto() {
+
+		//获取navigation中的控件
+		View view = navigation.getHeaderView(0);
+		head_tx = (ImageView)view.findViewById(R.id.head_tx);
+		head_name = (TextView)view.findViewById(R.id.head_name);
+
+		Retrofit retrofit = new Retrofit.Builder()
+				.baseUrl("http://news-at.zhihu.com")
+				.addConverterFactory(GsonConverterFactory.create())
+				.build();
+
+		MainService mainService = retrofit.create(MainService.class);
+		Call<ImageInfo> call = mainService.getSplash("1080*1776");
+
+		call.enqueue(new retrofit2.Callback<ImageInfo>() {
+			@Override
+			public void onResponse(Call<ImageInfo> call, retrofit2.Response<ImageInfo> response) {
+				if(response.body() != null) {
+					Glide.with(Main.this)
+							.load(response.body().getImg())
+							.centerCrop()
+							.diskCacheStrategy(DiskCacheStrategy.ALL)
+							.transform(new GlideCircleTransform(Main.this))
+							.placeholder(R.drawable.home)
+							.error(R.drawable.home)
+							.crossFade()
+							.into(head_tx);
+					head_name.setText(response.body().getText());
+					Log.i("Tag", "onResponse: "+response.body().getText());
+
+				}
+			}
+
+			@Override
+			public void onFailure(Call<ImageInfo> call, Throwable t) {
+
+			}
+		});
 	}
 }
