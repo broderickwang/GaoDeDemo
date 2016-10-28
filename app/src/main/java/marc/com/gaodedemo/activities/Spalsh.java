@@ -5,6 +5,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.WindowManager;
 import android.view.animation.AlphaAnimation;
 import android.view.animation.Animation;
@@ -20,7 +21,10 @@ import butterknife.OnClick;
 import marc.com.gaodedemo.Main;
 import marc.com.gaodedemo.R;
 import marc.com.gaodedemo.bean.ImageInfo;
+import marc.com.gaodedemo.bean.User;
 import marc.com.gaodedemo.service.MainService;
+import marc.com.gaodedemo.util.ServiceGenerator;
+import okhttp3.ResponseBody;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -53,6 +57,7 @@ public class Spalsh extends AppCompatActivity {
 		}
 //		jump.setText(getStringJNI());
 		jump.getBackground().setAlpha(100);
+		loadD();
 		getData();
 
 		AlphaAnimation alphaAnimation = new AlphaAnimation(0.0f, 1.0f);
@@ -103,6 +108,7 @@ public class Spalsh extends AppCompatActivity {
 				.addConverterFactory(GsonConverterFactory.create())
 				.build();
 
+
 		MainService service = retrofit.create(MainService.class);
 		Call<ImageInfo> call = service.getSplash("1080*1776");
 
@@ -130,5 +136,40 @@ public class Spalsh extends AppCompatActivity {
 		startActivity(i);
 //		downLoad();
 		finish();
+	}
+	private void loadD() {
+		Retrofit retrofit = new Retrofit.Builder()
+				.baseUrl("http://192.168.9.45:8080")
+				.addConverterFactory(GsonConverterFactory.create())
+				.build();
+
+
+		MainService service = ServiceGenerator.createService(MainService.class);//retrofit.create(MainService.class);
+
+		/*Call<ResponseBody> call = service.sendLng("120","36");
+		call.enqueue(new Callback<ResponseBody>() {
+			@Override
+			public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
+
+			}
+
+			@Override
+			public void onFailure(Call<ResponseBody> call, Throwable t) {
+
+			}
+		});*/
+		Call<User> call = service.sendBody(new User("120","36"));
+		call.enqueue(new Callback<User>() {
+			@Override
+			public void onResponse(Call<User> call, Response<User> response) {
+
+			}
+
+			@Override
+			public void onFailure(Call<User> call, Throwable t) {
+
+			}
+		});
+
 	}
 }

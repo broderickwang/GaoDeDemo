@@ -63,9 +63,11 @@ import butterknife.ButterKnife;
 import butterknife.OnClick;
 import marc.com.gaodedemo.activities.NaviActivity;
 import marc.com.gaodedemo.bean.ImageInfo;
+import marc.com.gaodedemo.bean.User;
 import marc.com.gaodedemo.service.LocateService;
 import marc.com.gaodedemo.service.MainService;
 import marc.com.gaodedemo.util.GlideCircleTransform;
+import marc.com.gaodedemo.util.ServiceGenerator;
 import okhttp3.Callback;
 import okhttp3.HttpUrl;
 import okhttp3.OkHttpClient;
@@ -220,33 +222,18 @@ public class Main extends AppCompatActivity implements LocationSource
 			}
 		});
 	}
-
-	private void loadD() {
-		Retrofit retrofit = new Retrofit.Builder()
-				.baseUrl("http://192.168.9.45")
-				.addConverterFactory(GsonConverterFactory.create())
-				.build();
-
-
-		/*call.enqueue(new Callback<NewsBean>() {
-			@Override
-			public void onResponse(Call<NewsBean> call, Response<NewsBean> response) {
-
-				NewsBean body = response.body();
-				NewsBean.ResultBean resultBean = body.getResult();
-				adaptor.setData(resultBean.getData());
-				adaptor.notifyDataSetChanged();
-				dlg.dismiss();
-				if(newsRef != null)
-					newsRef.setRefreshing(false);
-			}
-
-			@Override
-			public void onFailure(Call<NewsBean> call, Throwable t) {
-
-			}
-		});*/
+	private void loadD(){
+		OkHttpClient.Builder httpClient = new OkHttpClient.Builder();
+		Retrofit.Builder builder =
+				new Retrofit.Builder()
+						.baseUrl("http://192.168.2.105:8080")
+						.addConverterFactory(GsonConverterFactory.create());
+		Retrofit retrofit = builder.client(httpClient.build()).build();
+		MainService service = retrofit.create(MainService.class);
+//		service.createTask()
 	}
+
+
 
 
 	private void initMap() {
