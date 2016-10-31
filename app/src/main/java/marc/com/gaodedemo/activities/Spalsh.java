@@ -146,7 +146,7 @@ public class Spalsh extends AppCompatActivity {
 
 		MainService service = ServiceGenerator.createService(MainService.class);//retrofit.create(MainService.class);
 
-		/*Call<ResponseBody> call = service.sendLng("120","36");
+		Call<ResponseBody> call = service.sendLng("120","36");
 		call.enqueue(new Callback<ResponseBody>() {
 			@Override
 			public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
@@ -157,19 +157,6 @@ public class Spalsh extends AppCompatActivity {
 			public void onFailure(Call<ResponseBody> call, Throwable t) {
 
 			}
-		});*/
-		Call<User> call = service.sendBody(new User("120","36"));
-		call.enqueue(new Callback<User>() {
-			@Override
-			public void onResponse(Call<User> call, Response<User> response) {
-
-			}
-
-			@Override
-			public void onFailure(Call<User> call, Throwable t) {
-
-			}
 		});
-
 	}
 }
