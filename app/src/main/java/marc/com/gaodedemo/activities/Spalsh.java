@@ -23,6 +23,7 @@ import marc.com.gaodedemo.R;
 import marc.com.gaodedemo.bean.ImageInfo;
 import marc.com.gaodedemo.bean.User;
 import marc.com.gaodedemo.service.MainService;
+import marc.com.gaodedemo.util.APPData;
 import marc.com.gaodedemo.util.ServiceGenerator;
 import okhttp3.ResponseBody;
 import retrofit2.Call;
@@ -57,7 +58,7 @@ public class Spalsh extends AppCompatActivity {
 		}
 //		jump.setText(getStringJNI());
 		jump.getBackground().setAlpha(100);
-		loadD();
+//		loadD();
 		getData();
 
 		AlphaAnimation alphaAnimation = new AlphaAnimation(0.0f, 1.0f);
@@ -119,6 +120,7 @@ public class Spalsh extends AppCompatActivity {
 					Glide.with(Spalsh.this)
 							.load(response.body().getImg())
 							.into(spalsh);
+					APPData.userName = response.body().getText();
 					name.setText(response.body().getText());
 				}
 			}
@@ -146,7 +148,7 @@ public class Spalsh extends AppCompatActivity {
 
 		MainService service = ServiceGenerator.createService(MainService.class);//retrofit.create(MainService.class);
 
-		Call<ResponseBody> call = service.sendLng("120","36");
+		/*Call<ResponseBody> call = service.sendLng("120","36");
 		call.enqueue(new Callback<ResponseBody>() {
 			@Override
 			public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
@@ -157,6 +159,6 @@ public class Spalsh extends AppCompatActivity {
 			public void onFailure(Call<ResponseBody> call, Throwable t) {
 
 			}
-		});
+		});*/
 	}
 }

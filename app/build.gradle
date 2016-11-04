@@ -5,11 +5,16 @@ android {
     buildToolsVersion "24.0.2"
     defaultConfig {
         applicationId "marc.com.gaodedemo"
-        minSdkVersion 23
+        minSdkVersion 19
         targetSdkVersion 24
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+    }
+    packagingOptions {
+        exclude 'META-INF/LGPL2.1'
+        exclude 'META-INF/LICENSE'
+        exclude 'META-INF/NOTICE'
     }
     buildTypes {
         release {
@@ -40,8 +45,12 @@ dependencies {
     compile 'com.squareup.retrofit2:converter-gson:2.1.0'
 
 //    compile 'org.xutils:xutils:3.3.34'
-    compile 'com.squareup.okhttp3:okhttp:3.3.0'
+//    compile 'com.squareup.okhttp3:okhttp:3.3.0'
+    compile 'com.squareup.okhttp3:okhttp:3.3.1'
 
     compile 'com.squareup.picasso:picasso:2.5.1'
     compile 'com.github.bumptech.glide:glide:3.5.2'
+
+    //ESRI
+//    compile 'com.esri.arcgis.android:arcgis-android:10.2.8-1'
 }

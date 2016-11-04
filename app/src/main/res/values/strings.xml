@@ -2,4 +2,5 @@
     <string name="app_name">GaoDeDemo</string>
     <string name="drawer_open">opne</string>
     <string name="drawer_close">close</string>
+    <string name="internal_storage">internal_storage</string>
 </resources>

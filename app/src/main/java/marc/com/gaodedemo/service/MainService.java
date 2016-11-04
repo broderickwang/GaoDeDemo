@@ -31,7 +31,11 @@ public interface MainService {
 			@Path("repo") String repo
 	);
 
-	@POST("/ServletDemo/servlet/GDServlet?")
-	Call<ResponseBody> sendLng(@Query("latitude") String latitude, @Query("longitude")String longitude);
+	@POST("/servlet/GDLngServlet?")
+	Call<ResponseBody> sendLng(@Query("latitude") String latitude,
+	                           @Query("longitude")String longitude,
+	                           @Query("time")String time,
+	                           @Query("user")String user);
+
 
 }

@@ -50,9 +50,13 @@ import com.amap.api.services.geocoder.GeocodeSearch;
 import com.amap.api.services.geocoder.RegeocodeResult;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
+//import com.esri.core.geometry.GeometryEngine;
+//import com.esri.core.geometry.Point;
+//import com.esri.core.geometry.SpatialReference;
 import com.getbase.floatingactionbutton.FloatingActionButton;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -61,25 +65,33 @@ import java.util.List;
 import butterknife.Bind;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
+import marc.com.gaodedemo.activities.FileUploadActivity;
 import marc.com.gaodedemo.activities.NaviActivity;
 import marc.com.gaodedemo.bean.ImageInfo;
-import marc.com.gaodedemo.bean.User;
+import marc.com.gaodedemo.service.FileUploadService;
 import marc.com.gaodedemo.service.LocateService;
 import marc.com.gaodedemo.service.MainService;
+import marc.com.gaodedemo.util.APPData;
+import marc.com.gaodedemo.util.CoordinateConversion;
 import marc.com.gaodedemo.util.GlideCircleTransform;
+import marc.com.gaodedemo.util.MapUtil;
 import marc.com.gaodedemo.util.ServiceGenerator;
 import okhttp3.Callback;
 import okhttp3.HttpUrl;
+import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
+import okhttp3.RequestBody;
 import okhttp3.Response;
+import okhttp3.ResponseBody;
 import retrofit2.Call;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
 public class Main extends AppCompatActivity implements LocationSource
 		, NavigationView.OnNavigationItemSelectedListener {
-
+//	public static SpatialReference wm = SpatialReference.create(102100);
+//	public static SpatialReference egs = SpatialReference.create(4326);
 	MapView mMapView = null;
 	static AMap mAmap;
 	static MarkerOptions mMarkerOptions;
@@ -92,25 +104,30 @@ public class Main extends AppCompatActivity implements LocationSource
 	static NaviLatLng start,end;
 	ImageView head_tx;
 	TextView head_name;
+	public static String str_time;
+
+	long firstTime = 0;
+	static MainService service;
 
 	//声明定位回调监听器
 	public static AMapLocationListener mLocationListener = new AMapLocationListener() {
 		@Override
 		public void onLocationChanged(AMapLocation aMapLocation) {
 			if (aMapLocation != null) {
-				StringBuilder stringBuilder = new StringBuilder();
 				if (aMapLocation.getErrorCode() == 0) {
+					StringBuilder stringBuilder_time = new StringBuilder();
 					//可在其中解析amapLocation获取相应内容。
-					stringBuilder.append("定位结果来源" + aMapLocation.getLocationType());//获取当前定位结果来源，如网络定位结果，详见定位类型表
-					stringBuilder.append(" 纬度" + aMapLocation.getLatitude());//获取纬度
-					stringBuilder.append(",经度" + aMapLocation.getLongitude());//获取经度
+					stringBuilder_time.append("定位结果来源" + aMapLocation.getLocationType());//获取当前定位结果来源，如网络定位结果，详见定位类型表
+					stringBuilder_time.append(" 纬度" + aMapLocation.getLatitude());//获取纬度
+					stringBuilder_time.append(",经度" + aMapLocation.getLongitude());//获取经度
+					Log.i("tag", "onLocationChanged lng : "+stringBuilder_time.toString());
 					aMapLocation.getAccuracy();//获取精度信息
 					aMapLocation.getAddress();//地址，如果option中设置isNeedAddress为false，则没有此结果，网络定位结果中会有地址信息，GPS定位不返回地址信息。
 					aMapLocation.getCountry();//国家信息
 					aMapLocation.getProvince();//省信息
 					aMapLocation.getCity();//城市信息
 					aMapLocation.getDistrict();//城区信息
-					stringBuilder.append("-街道:" + aMapLocation.getStreet());//街道信息
+					stringBuilder_time.append("-街道:" + aMapLocation.getStreet());//街道信息
 					aMapLocation.getStreetNum();//街道门牌号信息
 					aMapLocation.getCityCode();//城市编码
 					aMapLocation.getAdCode();//地区编码
@@ -118,18 +135,35 @@ public class Main extends AppCompatActivity implements LocationSource
 					//获取定位时间 aMapLocation.getTime()
 					SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 					Date date = new Date(System.currentTimeMillis());
-					stringBuilder.append(" time = " + df.format(date));
-					Log.i("TAG", "onLocationChanged: " + stringBuilder.toString());
+					str_time = df.format(date);
+					stringBuilder_time.append(" time = " + df.format(date));
+					Log.i("TAG", "onLocationChanged: " + stringBuilder_time.toString());
 
 					LatLng latLng = new LatLng(aMapLocation.getLatitude(), aMapLocation.getLongitude());
-					start = new NaviLatLng(aMapLocation.getLatitude(), aMapLocation.getLongitude());
+
+					//导航起点使用
+					//start = new NaviLatLng(aMapLocation.getLatitude(), aMapLocation.getLongitude());
+
+					String[] webMokt = MapUtil.lonLat2WebMercator(latLng.longitude,latLng.latitude);
+
+					Log.i("TAG", "loadOkhttp: webmocarte 1="+webMokt[0]+","+webMokt[1]);
+
+					//esri change
+//					Point mLocation = new Point(latLng.longitude, latLng.latitude);
+//					Point p = (Point) GeometryEngine.project(mLocation, egs, wm);
+//					BigDecimal b = new BigDecimal(p.getX());
+//					Log.i("TAG", "loadOkhttp: webmocarte 1="+b.toPlainString()+","+p.getY());
+
+					loadOkhttp(latLng/*MapUtil.gcj_decrypt_exact(latLng)*/);
+//					loadRef(latLng);
+//					loadOkhttp2(b.toPlainString(), String.valueOf(p.getY()));
 
 					mAmap.clear();
 
 					final Marker marker = mAmap.addMarker(new MarkerOptions().
 							position(latLng).
 							title("user").
-							snippet(stringBuilder.toString()));
+							snippet(stringBuilder_time.toString()));
 
 					mAmap.moveCamera(CameraUpdateFactory.newCameraPosition(new CameraPosition(
 							latLng,//新的中心点坐标
@@ -137,6 +171,8 @@ public class Main extends AppCompatActivity implements LocationSource
 							0, //俯仰角0°~45°（垂直与地图时为0）
 							0  ////偏航角 0~360° (正北方为0)
 					)));
+
+
 
 				} else {
 					//定位失败时，可通过ErrCode（错误码）信息来确定失败的原因，errInfo是错误信息，详见错误码表。
@@ -194,16 +230,80 @@ public class Main extends AppCompatActivity implements LocationSource
 
 		getPhoto();
 
+//		getLocation();
 	}
 
-	private void loadOkhttp() {
+	private void loadOkHttp(){
+		MediaType MEDIA_TYPE_MARKDOWN
+				= MediaType.parse("text/x-markdown; charset=utf-8");
+		OkHttpClient client = new OkHttpClient();
+		String postBody = ""
+				+ "Releases\n"
+				+ "--------\n"
+				+ "\n"
+				+ " * _1.0_ May 6, 2013\n"
+				+ " * _1.1_ June 15, 2013\n"
+				+ " * _1.2_ August 11, 2013\n";
+
+		Request request = new Request.Builder()
+				.url("http://192.168.2.105:8080/ServletDemo/servlet/GDServlet")
+				.post(RequestBody.create(MEDIA_TYPE_MARKDOWN, postBody))
+				.build();
+
+		/*try {
+			Response response = client.newCall(request).execute();
+			if(response.isSuccessful()){
+				Log.i("TAG", "loadOkHttp: "+response.toString());
+			}
+		}catch (Exception e){
+			Log.e("TAG", "loadOkHttp: ",e );
+		}*/
+		client.newCall(request).enqueue(new Callback() {
+			@Override
+			public void onFailure(okhttp3.Call call, IOException e) {
+				Log.e("TAG", "loadOkHttp: ",e );
+			}
+
+			@Override
+			public void onResponse(okhttp3.Call call, Response response) throws IOException {
+				Log.i("TAG", "loadOkHttp: "+response.toString());
+			}
+		});
+	}
+
+	public static void loadOkhttp(LatLng latLng) {
+
+		double x = latLng.longitude;
+		double y = latLng.latitude;
+
+//		MapUtil.MillierConvertion(latLng.latitude,latLng.longitude);
+//		CoordinateConversion cc = new CoordinateConversion();
+//		double[] ds = cc.latLon2UTM_Doubles(latLng.latitude,latLng.longitude);
+		String[] webMokt = MapUtil.lonLat2WebMercator(latLng.longitude,latLng.latitude);
+
+//		Log.i("TAG", "loadOkhttp: webmocarte 1="+webMokt[0]+","+webMokt[1]);
+
+
+
+		String URL = "http://219.146.254.74:7007/servlet/GDLngServlet";
+				//"http://219.146.254.74:7001/servlet/GDLngServlet";
+				//"http://192.168.9.68:7001/servlet/GDLngServlet";
+				//"http://192.168.2.105:8080/ServletDemo/servlet/GDServlet"
 		OkHttpClient client = new OkHttpClient();
 
-		HttpUrl.Builder urlBuilder =
-				HttpUrl.parse("http://192.168.2.105:8080/ServletDemo/servlet/GDServlet")
-						.newBuilder();
-		urlBuilder.addQueryParameter("latitude", "1.0");
-		urlBuilder.addQueryParameter("longitude", "android");
+
+
+		HttpUrl.Builder urlBuilder = HttpUrl.parse(URL).newBuilder();
+		/*urlBuilder.addQueryParameter("latitude", String.valueOf(x));
+		urlBuilder.addQueryParameter("longitude", String.valueOf(y));*/
+		/*urlBuilder.addQueryParameter("latitude", String.valueOf(latLng.latitude));
+		urlBuilder.addQueryParameter("longitude", String.valueOf(latLng.longitude));*/
+		/*urlBuilder.addQueryParameter("latitude", String.valueOf(ds[0]));
+		urlBuilder.addQueryParameter("longitude", String.valueOf(ds[1]));*/
+		urlBuilder.addQueryParameter("latitude", String.valueOf(webMokt[0]));
+		urlBuilder.addQueryParameter("longitude", String.valueOf(webMokt[1]));
+		urlBuilder.addQueryParameter("time",str_time);
+		urlBuilder.addQueryParameter("user", APPData.userName);
 		String url = urlBuilder.build().toString();
 
 		Request request = new Request.Builder()
@@ -213,30 +313,39 @@ public class Main extends AppCompatActivity implements LocationSource
 		client.newCall(request).enqueue(new Callback() {
 			@Override
 			public void onFailure(okhttp3.Call call, IOException e) {
-				Log.e("TAG", "onFailure: ", e);
+				Log.e("TAG", " loadOkhttp= onFailure: ", e);
 			}
 
 			@Override
 			public void onResponse(okhttp3.Call call, Response response) throws IOException {
-				Log.i("TAG", "onResponse: " + response.toString());
+				Log.i("TAG", "loadOkhttp= onResponse: " + response.toString());
 			}
 		});
 	}
-	private void loadD(){
-		OkHttpClient.Builder httpClient = new OkHttpClient.Builder();
-		Retrofit.Builder builder =
-				new Retrofit.Builder()
-						.baseUrl("http://192.168.2.105:8080")
-						.addConverterFactory(GsonConverterFactory.create());
-		Retrofit retrofit = builder.client(httpClient.build()).build();
-		MainService service = retrofit.create(MainService.class);
-//		service.createTask()
+
+	private static void loadRef(LatLng latLng){
+
+		Call<ResponseBody> call = service.sendLng(String.valueOf(latLng.latitude),
+				String.valueOf(latLng.longitude),
+				str_time,APPData.userName);
+		call.enqueue(new retrofit2.Callback<ResponseBody>() {
+			@Override
+			public void onResponse(Call<ResponseBody> call, retrofit2.Response<ResponseBody> response) {
+				Log.i("TAG", "loadOkhttp= onResponse: " + response.toString());
+			}
+
+			@Override
+			public void onFailure(Call<ResponseBody> call, Throwable t) {
+				Log.e("TAG", " loadOkhttp= onFailure: ", t);
+			}
+		});
 	}
 
 
 
 
 	private void initMap() {
+		service = ServiceGenerator.createService(MainService.class);
 
 		mAmap = mMapView.getMap();
 		mAmap.setOnMarkerClickListener(new AMap.OnMarkerClickListener() {
@@ -281,6 +390,10 @@ public class Main extends AppCompatActivity implements LocationSource
 			//申请WRITE_EXTERNAL_STORAGE权限
 			permissions.add(Manifest.permission.READ_PHONE_STATE);
 		}
+		if(ContextCompat.checkSelfPermission(this,Manifest.permission.CAMERA)
+				!= PackageManager.PERMISSION_GRANTED)
+			//申请CAMERA权限
+			permissions.add(Manifest.permission.CAMERA);
 		String[] arr_permison;
 		if (permissions.size() != 0) {
 			arr_permison = new String[permissions.size()];
@@ -368,13 +481,15 @@ public class Main extends AppCompatActivity implements LocationSource
 		switch (view.getId()) {
 			case R.id.pos:
 				MyApplication.mLocationClient.startLocation();
+//				getLocation();
 				break;
 			case R.id.route:
-				Intent i = new Intent(Main.this, NaviActivity.class);
+				/*Intent i = new Intent(Main.this, NaviActivity.class);
 				Bundle bundle = new Bundle();
 				bundle.putParcelable("start", start);
 				bundle.putParcelable("end",end);
-				i.putExtras(bundle);
+				i.putExtras(bundle);*/
+				Intent i = new Intent(Main.this, FileUploadActivity.class);
 				startActivity(i);
 				break;
 		}
@@ -426,9 +541,13 @@ public class Main extends AppCompatActivity implements LocationSource
 	private void showLocation(Location location) {
 		String locationStr = "维度：" + location.getLatitude() + "\n"
 				+ "经度：" + location.getLongitude();
-		Log.i("TAG", "showLocation: " + locationStr);
+		Log.i("tag", "onLocationChanged lng : "+locationStr);
 
-		LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
+		String[] webMokt = MapUtil.lonLat2WebMercator(location.getLongitude(),location.getLatitude());
+
+		Log.i("TAG", "loadOkhttp: webmocarte 2= "+webMokt[0]+","+webMokt[1]);
+
+		/*LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
 
 		mAmap.clear();
 
@@ -442,7 +561,9 @@ public class Main extends AppCompatActivity implements LocationSource
 				18, //新的缩放级别
 				0, //俯仰角0°~45°（垂直与地图时为0）
 				0  ////偏航角 0~360° (正北方为0)
-		)));
+		)));*/
+
+//		loadOkhttp(latLng);
 
 	}
 
@@ -591,5 +712,18 @@ public class Main extends AppCompatActivity implements LocationSource
 
 			}
 		});
+	}
+
+	@Override
+	public void onBackPressed() {
+		long secondTime = System.currentTimeMillis();
+		if((secondTime-firstTime)>2000){
+			Toast.makeText(Main.this, "再点击一次,退出", Toast.LENGTH_SHORT).show();
+			firstTime = secondTime;
+			return ;
+		}else{
+			stopService(locateService);
+			System.exit(0);
+		}
 	}
 }
