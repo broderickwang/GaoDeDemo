@@ -24,7 +24,7 @@ import retrofit2.converter.gson.GsonConverterFactory;
 public class ServiceGenerator {
 	public static final String MULTIPART_FORM_DATA = "multipart/form-data";
 
-	public static final String API_BASE_URL = "http://192.168.9.45:8080";//"http://192.168.9.68:7001";
+	public static final String API_BASE_URL = /*"http://192.168.9.45:8080";*/"http://192.168.9.68:7001";
 	//"http://192.168.9.45:8080";
 	public static final String API_URL_RELEASE = "http://219.146.254.74:7007";
 
@@ -32,7 +32,7 @@ public class ServiceGenerator {
 
 	private static Retrofit.Builder builder =
 			new Retrofit.Builder()
-					.baseUrl(API_URL_RELEASE)
+					.baseUrl(API_BASE_URL)
 					.addConverterFactory(GsonConverterFactory.create());
 
 	public static <S> S createService(Class<S> serviceClass) {

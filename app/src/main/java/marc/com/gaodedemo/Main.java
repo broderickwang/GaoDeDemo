@@ -109,6 +109,9 @@ public class Main extends AppCompatActivity implements LocationSource
 	long firstTime = 0;
 	static MainService service;
 
+	static Context mContext;
+
+
 	//声明定位回调监听器
 	public static AMapLocationListener mLocationListener = new AMapLocationListener() {
 		@Override
@@ -154,7 +157,7 @@ public class Main extends AppCompatActivity implements LocationSource
 //					BigDecimal b = new BigDecimal(p.getX());
 //					Log.i("TAG", "loadOkhttp: webmocarte 1="+b.toPlainString()+","+p.getY());
 
-					loadOkhttp(latLng/*MapUtil.gcj_decrypt_exact(latLng)*/);
+//					loadOkhttp(latLng);
 //					loadRef(latLng);
 //					loadOkhttp2(b.toPlainString(), String.valueOf(p.getY()));
 
@@ -176,9 +179,9 @@ public class Main extends AppCompatActivity implements LocationSource
 
 				} else {
 					//定位失败时，可通过ErrCode（错误码）信息来确定失败的原因，errInfo是错误信息，详见错误码表。
-					Log.e("AmapError", "location Error, ErrCode:"
+					Toast.makeText(mContext, "location Error, ErrCode:"
 							+ aMapLocation.getErrorCode() + ", errInfo:"
-							+ aMapLocation.getErrorInfo());
+							+ aMapLocation.getErrorInfo(), Toast.LENGTH_SHORT).show();
 				}
 				MyApplication.mLocationClient.stopLocation();//停止定位后，本地定位服务并不会被销毁
 			}
@@ -230,7 +233,7 @@ public class Main extends AppCompatActivity implements LocationSource
 
 		getPhoto();
 
-//		getLocation();
+		mContext = Main.this;
 	}
 
 	private void loadOkHttp(){

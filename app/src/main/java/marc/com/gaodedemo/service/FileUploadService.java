@@ -24,7 +24,7 @@ public interface FileUploadService {
 
 	// previous code for single file uploads
 	@Multipart
-	@POST(/*"/servlet/UploadServlet"*/"/ServletDemo/servlet/UploadServlet")
+	@POST("/servlet/UploadServlet"/*"/ServletDemo/servlet/UploadServlet"*/)
 	Call<ResponseBody> uploadFile(
 			@Part("description") RequestBody description,
 			@Part MultipartBody.Part file);
